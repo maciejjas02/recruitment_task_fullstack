@@ -1,3 +1,6 @@
 body {
     background-color: lightgray;
 }
+table { border:1px solid #e5e7eb; }
+th, td { padding:.5rem .75rem; border-top:1px solid #f1f5f9; text-align:left; }
+thead th { background:#f8fafc; }

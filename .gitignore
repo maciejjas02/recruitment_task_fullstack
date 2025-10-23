@@ -77,3 +77,20 @@ yarn-error.log
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
+# Symfony / PHP
+/vendor/
+/var/
+/node_modules/
+/public/build/
+/.phpunit.result.cache
+/.env.local
+/.env.local.php
+/.env.*.local
+
+# IDE
+/.idea/
+/.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
