@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kantor Pro - React Hybrid</title>
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="root">
+        <div class="loading">🔄 Ładowanie React aplikacji...</div>
+    </div>
+
+    <script>
+        // VANILLA JS
+        let chartInstances = {};
+
+        const destroyCharts = () => {
+            Object.values(chartInstances).forEach(chart => {
+                if (chart) {
+                    try {
+                        chart.destroy();
+                    } catch (e) {
+                        console.log('Chart already destroyed');
+                    }
+                }
+            });
+            chartInstances = {};
+        };
+
+        const loadCharts = async () => {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!startDate || !endDate) {
+                alert('Proszę wybrać datę początkową i końcową');
+                return;
+            }
+
+            console.log('=== VANILLA JS CHART LOADING ===');
+            destroyCharts();
+
+            const chartsContainer = document.getElementById('charts-container');
+            const loadingDiv = document.getElementById('charts-loading');
+            
+            if (chartsContainer.classList.contains('hidden')) {
+                chartsContainer.classList.remove('hidden');
+            }
+            
+            loadingDiv.style.display = 'block';
+
+            try {
+                const currencies = ['EUR', 'USD', 'CZK', 'IDR', 'BRL'];
+                const currencyInfo = {
+                    'EUR': { name: 'Euro', flag: '🇪🇺' },
+                    'USD': { name: 'Dolar amerykański', flag: '🇺🇸' },
+                    'CZK': { name: 'Korona czeska', flag: '🇨🇿' },
+                    'IDR': { name: 'Rupia indonezyjska', flag: '🇮🇩' },
+                    'BRL': { name: 'Real brazylijski', flag: '🇧🇷' }
+                };
+
+                for (const currency of currencies) {
+                    try {
+                        console.log(`Loading chart for ${currency}`);
+                        
+                        const response = await fetch(`/api/rates/${currency}/history?startDate=${startDate}&endDate=${endDate}`);
+                        if (!response.ok) {
+                            console.error(`HTTP ${response.status} for ${currency}`);
+                            continue;
+                        }
+                        
+                        const data = await response.json();
+                        console.log(`Data for ${currency}:`, data);
+                        
+                        const points = data.points || [];
+
+                        if (points.length > 0) {
+                            const canvas = document.getElementById(`chart-${currency}`);
+                            console.log(`Canvas for ${currency}:`, canvas);
+                            
+                            if (canvas) {
+                                const ctx = canvas.getContext('2d');
+                                
+                                const chart = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: points.map(p => p.date),
+                                        datasets: [
+                                            {
+                                                label: `${currency} KUPNO`,
+                                                data: points.map(p => parseFloat(p.buy)),
+                                                borderColor: '#059669',
+                                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                                                borderWidth: 2,
+                                                fill: false,
+                                                tension: 0.4,
+                                                pointBackgroundColor: '#ffffff',
+                                                pointBorderColor: '#059669',
+                                                pointBorderWidth: 2,
+                                                pointRadius: 3
+                                            },
+                                            {
+                                                label: `${currency} NBP`,
+                                                data: points.map(p => parseFloat(p.mid)),
+                                                borderColor: '#3b82f6',
+                                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                borderWidth: 3,
+                                                fill: true,
+                                                tension: 0.4,
+                                                pointBackgroundColor: '#ffffff',
+                                                pointBorderColor: '#3b82f6',
+                                                pointBorderWidth: 2,
+                                                pointRadius: 4
+                                            },
+                                            {
+                                                label: `${currency} SPRZEDAŻ`,
+                                                data: points.map(p => parseFloat(p.sell)),
+                                                borderColor: '#dc2626',
+                                                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                                                borderWidth: 2,
+                                                fill: false,
+                                                tension: 0.4,
+                                                pointBackgroundColor: '#ffffff',
+                                                pointBorderColor: '#dc2626',
+                                                pointBorderWidth: 2,
+                                                pointRadius: 3
+                                            }
+                                        ]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        interaction: {
+                                            mode: 'index',
+                                            intersect: false,
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top',
+                                                labels: {
+                                                    usePointStyle: true,
+                                                    padding: 20
+                                                }
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: `${currency} - ${currencyInfo[currency]?.name || currency} (Kursy PLN)`,
+                                                font: {
+                                                    size: 16,
+                                                    weight: 'bold'
+                                                }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return context.dataset.label + ': ' + parseFloat(context.parsed.y).toFixed(4) + ' PLN';
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: false,
+                                                title: {
+                                                    display: true,
+                                                    text: 'Kurs (PLN)',
+                                                    font: {
+                                                        weight: 'bold'
+                                                    }
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.1)'
+                                                },
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return parseFloat(value).toFixed(4);
+                                                    }
+                                                }
+                                            },
+                                            x: {
+                                                title: {
+                                                    display: true,
+                                                    text: 'Data',
+                                                    font: {
+                                                        weight: 'bold'
+                                                    }
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.1)'
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                                
+                                chartInstances[currency] = chart;
+                                console.log(`✅ Chart created for ${currency}!`);
+                            } else {
+                                console.error(`❌ Canvas not found for ${currency}`);
+                            }
+                        } else {
+                            console.warn(`No data for ${currency}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error loading chart for ${currency}:`, error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading charts:', error);
+                alert('Nie udało się załadować wykresów: ' + error.message);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        };
+
+        const toggleCharts = () => {
+            const chartsContainer = document.getElementById('charts-container');
+            chartsContainer.classList.toggle('hidden');
+        };
+
+        const setDateRange = (days) => {
+            const end = new Date();
+            const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('end-date').value = end.toISOString().split('T')[0];
+            document.getElementById('start-date').value = start.toISOString().split('T')[0];
+        };
+    </script>
+
+    <!-- REACT COMPONENTS -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Dane walut
+        const CURRENCY_INFO = {
+            'EUR': { name: 'Euro', flag: '🇪🇺' },
+            'USD': { name: 'Dolar amerykański', flag: '🇺🇸' },
+            'CZK': { name: 'Korona czeska', flag: '🇨🇿' },
+            'IDR': { name: 'Rupia indonezyjska', flag: '🇮🇩' },
+            'BRL': { name: 'Real brazylijski', flag: '🇧🇷' }
+        };
+
+        const formatRate = (value) => {
+            if (value === null || value === undefined) return 'N/A';
+            return Number(value).toFixed(4);
+        };
+
+        // Główny komponent App - TYLKO KURSY
+        function App() {
+            const [currentRates, setCurrentRates] = useState([]);
+            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [animationsPaused, setAnimationsPaused] = useState(false);
+            const [showSuccessStatus, setShowSuccessStatus] = useState(true);
+            const [fadeOutStatus, setFadeOutStatus] = useState(false);
+
+            useEffect(() => {
+                loadCurrentRates();
+            }, [selectedDate]);
+
+            // Ukrywanie success status po 3 sekundach z animacją
+            useEffect(() => {
+                const fadeTimer = setTimeout(() => {
+                    setFadeOutStatus(true);
+                }, 2500); // Start fade out after 2.5s
+
+                const hideTimer = setTimeout(() => {
+                    setShowSuccessStatus(false);
+                }, 3000); // Completely hide after 3s
+
+                return () => {
+                    clearTimeout(fadeTimer);
+                    clearTimeout(hideTimer);
+                };
+            }, []);
+
+            const loadCurrentRates = async () => {
+                try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    const url = selectedDate === new Date().toISOString().split('T')[0] 
+                        ? '/api/rates' 
+                        : `/api/rates?date=${selectedDate}`;
+                    
+                    console.log('Loading from:', url);
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const rates = await response.json();
+                    console.log('Loaded rates:', rates);
+                    
+                    if (!rates || rates.length === 0) {
+                        throw new Error(`Brak danych dla daty ${selectedDate}`);
+                    }
+                    
+                    setCurrentRates(rates);
+                } catch (err) {
+                    console.error('Error:', err);
+                    setError(err.message);
+                    setCurrentRates([]);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleDateChange = (newDate) => {
+                setSelectedDate(newDate);
+            };
+
+            const isToday = () => {
+                return selectedDate === new Date().toISOString().split('T')[0];
+            };
+
+            const toggleAnimations = () => {
+                setAnimationsPaused(!animationsPaused);
+                if (!animationsPaused) {
+                    document.body.classList.add('animations-paused');
+                } else {
+                    document.body.classList.remove('animations-paused');
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="container">
+                        <div className="loading">
+                            🔄 Ładowanie kursów z API NBP...
+                        </div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <>
+                        <button 
+                            className="toggle-animation-btn" 
+                            onClick={toggleAnimations}
+                        >
+                            {animationsPaused ? '▶️ Animacje' : '⏸️ Animacje'}
+                        </button>
+
+                        <div className="container">
+                            <div className="header">
+                                <h1 className="title">Kantor Pro</h1>
+                                <p style={{color: '#6b7280', margin: 0}}>
+                                    Profesjonalne kursy wymiany walut - React Hybrid
+                                </p>
+                            </div>
+                            <div className="error">
+                                ❌ {error}
+                            </div>
+                        </div>
+                    </>
+                );
+            }
+
+            return (
+                <>
+                    <button 
+                        className="toggle-animation-btn" 
+                        onClick={toggleAnimations}
+                    >
+                        {animationsPaused ? '▶️ Animacje' : '⏸️ Animacje'}
+                    </button>
+
+                    <div className="container">
+                        <div className="header">
+                            <h1 className="title">Kantor Pro</h1>
+                            <p style={{color: '#6b7280', margin: 0}}>
+                                Profesjonalne kursy wymiany walut
+                            </p>
+                        </div>
+
+                        {showSuccessStatus && (
+                            <div className={`status ${fadeOutStatus ? 'fade-out' : ''}`}>
+                                ✅ Aplikacja działa poprawnie! Backend: Symfony API ✅ | Frontend: React ✅
+                            </div>
+                        )}
+
+                        {/* Kontrola daty */}
+                        <div className="controls">
+                            <h2 style={{margin: '0 0 15px 0', textAlign: 'center'}}>📅 Kursy na dzień {selectedDate}</h2>
+                            <div className="date-controls">
+                                <input 
+                                    type="date" 
+                                    value={selectedDate}
+                                    onChange={(e) => handleDateChange(e.target.value)}
+                                    className="date-input"
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                                <button 
+                                    onClick={() => handleDateChange(new Date().toISOString().split('T')[0])}
+                                    className="btn"
+                                    disabled={isToday()}
+                                >
+                                    📆 Dzisiaj
+                                </button>
+                                <button 
+                                    onClick={loadCurrentRates}
+                                    className="btn"
+                                >
+                                    🔄 Odśwież
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="status">
+                            💰 Kursy na {selectedDate} załadowane! 
+                            {isToday() ? 
+                                ` Ostatnia aktualizacja: ${new Date().toLocaleTimeString('pl-PL')}` : 
+                                ' Dane historyczne NBP'
+                            }
+                        </div>
+
+                        {/* Karty walut - REACT */}
+                        <div className="currency-grid">
+                            {currentRates.map((currency) => (
+                                <CurrencyCard key={currency.code} currency={currency} />
+                            ))}
+                        </div>
+
+                        {/* Sekcja wykresów - VANILLA JS */}
+                        <div className="controls">
+                            <h2 style={{margin: '0 0 15px 0', textAlign: 'center'}}>📊 Wykresy historyczne</h2>
+                            
+                            <div className="date-controls">
+                                <label>
+                                    Data początkowa:
+                                    <input 
+                                        type="date" 
+                                        id="start-date"
+                                        defaultValue={(() => {
+                                            const date = new Date();
+                                            date.setDate(date.getDate() - 7);
+                                            return date.toISOString().split('T')[0];
+                                        })()}
+                                        className="date-input"
+                                    />
+                                </label>
+                                
+                                <label>
+                                    Data końcowa:
+                                    <input 
+                                        type="date" 
+                                        id="end-date"
+                                        defaultValue={new Date().toISOString().split('T')[0]}
+                                        className="date-input"
+                                        max={new Date().toISOString().split('T')[0]}
+                                    />
+                                </label>
+                                
+                                <button onClick={() => window.loadCharts()} className="btn">
+                                    📈 Pokaż wykresy
+                                </button>
+                                
+                                <button onClick={() => window.toggleCharts()} className="btn" style={{background: '#059669'}}>
+                                    👁️ Pokaż/Ukryj wykresy
+                                </button>
+                            </div>
+
+                            <div style={{textAlign: 'center', marginTop: '10px'}}>
+                                <strong>Szybkie okresy:</strong>
+                                <button onClick={() => window.setDateRange(7)} className="btn small">7 dni</button>
+                                <button onClick={() => window.setDateRange(14)} className="btn small">14 dni</button>
+                                <button onClick={() => window.setDateRange(30)} className="btn small">30 dni</button>
+                            </div>
+
+                            <div id="charts-loading" style={{display: 'none'}} className="loading">
+                                🔄 Ładowanie wykresów ...
+                            </div>
+
+                            <div id="charts-container" className="charts-grid hidden" style={{marginTop: '20px'}}>
+                                <div className="chart-container">
+                                    <h3>EUR - Euro</h3>
+                                    <canvas id="chart-EUR" width="400" height="300"></canvas>
+                                </div>
+                                <div className="chart-container">
+                                    <h3>USD - Dolar amerykański</h3>
+                                    <canvas id="chart-USD" width="400" height="300"></canvas>
+                                </div>
+                                <div className="chart-container">
+                                    <h3>CZK - Korona czeska</h3>
+                                    <canvas id="chart-CZK" width="400" height="300"></canvas>
+                                </div>
+                                <div className="chart-container">
+                                    <h3>IDR - Rupia indonezyjska</h3>
+                                    <canvas id="chart-IDR" width="400" height="300"></canvas>
+                                </div>
+                                <div className="chart-container">
+                                    <h3>BRL - Real brazylijski</h3>
+                                    <canvas id="chart-BRL" width="400" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{marginTop: '30px', textAlign: 'center', color: '#6b7280', fontSize: '0.9rem'}}>
+                            <strong>System Kantorowy</strong> • 
+                            Dane z API NBP • 
+                            {isToday() ? 
+                                `Ostatnia aktualizacja: ${new Date().toLocaleTimeString('pl-PL')}` :
+                                `Dane historyczne z ${selectedDate}`
+                            }
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // Komponent karty waluty - REACT
+        function CurrencyCard({ currency }) {
+            const info = CURRENCY_INFO[currency.code] || {
+                name: currency.code,
+                flag: '🌍'
+            };
+
+            return (
+                <div className="currency-card">
+                    <div className="currency-header">
+                        <div className="currency-flag">
+                            {info.flag}
+                        </div>
+                        <div className="currency-info">
+                            <h3>{currency.code}</h3>
+                            <p>{info.name}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="rates">
+                        <div className="rate-box buy">
+                            <div className="rate-label">KUPNO</div>
+                            <div className="rate-value">{formatRate(currency.buy)}</div>
+                        </div>
+                        <div className="rate-box mid">
+                            <div className="rate-label">NBP</div>
+                            <div className="rate-value">{formatRate(currency.mid)}</div>
+                        </div>
+                        <div className="rate-box sell">
+                            <div className="rate-label">SPRZEDAŻ</div>
+                            <div className="rate-value">{formatRate(currency.sell)}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Expose functions to global scope for vanilla JS
+        window.loadCharts = loadCharts;
+        window.toggleCharts = toggleCharts;
+        window.setDateRange = setDateRange;
+
+        // Render React App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

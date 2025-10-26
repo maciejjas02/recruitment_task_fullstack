@@ -4,7 +4,7 @@ namespace App\Service;
 
 use Psr\Cache\CacheItemPoolInterface;
 
-final class NbpClient
+class NbpClient
 {
     private const BASE = 'https://api.nbp.pl/api';
 
@@ -65,7 +65,7 @@ final class NbpClient
         return $out;
     }
 
-    /** prościutki cache na 300s */
+    /** prosty cache na 300s */
     private function fetchCached(string $url, int $ttl)
     {
         $key = 'nbp_' . md5($url);

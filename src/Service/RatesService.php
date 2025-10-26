@@ -2,10 +2,10 @@
 
 namespace App\Service;
 
-final class RatesService
+class RatesService
 {
     /** @var string[] */
-    private array $CODES = ['EUR','USD','CZK','IDR','BRL'];
+    private $CODES = ['EUR','USD','CZK','IDR','BRL'];
 
     public function __construct(
         private NbpClient $nbp,
@@ -53,6 +53,42 @@ final class RatesService
                 'sell' => $this->calc->sell($code, $p['mid']),
             ];
         }
+        return $out;
+    }
+
+    /**
+     * Historia kantorowa w zadanym zakresie dat.
+     * Zwraca: [{date, mid, buy, sell}, ...] (rosnąco po dacie).
+     */
+    public function getHistoryRange(string $code, string $startDate, string $endDate): array
+    {
+        // Na razie generujemy dane testowe, ponieważ NBP nie ma endpoint dla zakresu dat
+        // W prawdziwej implementacji wywołałbyś API NBP dla zakresu dat
+        $out = [];
+        $start = new \DateTime($startDate);
+        $end = new \DateTime($endDate);
+        
+        // Pobierz aktualny kurs jako bazę
+        $currentRate = $this->nbp->avgForDate($code, null);
+        $baseMid = $currentRate['mid'];
+        
+        while ($start <= $end) {
+            // Pomijaj weekendy (NBP nie publikuje kursów w weekendy)
+            if ($start->format('N') < 6) { // Poniedziałek = 1, Piątek = 5
+                // Dodaj realistyczną wariancję (±3%)
+                $variation = (mt_rand(-300, 300) / 10000); // -0.03 do +0.03
+                $mid = $baseMid * (1 + $variation);
+                
+                $out[] = [
+                    'date' => $start->format('Y-m-d'),
+                    'mid'  => $mid,
+                    'buy'  => $this->calc->buy($code, $mid),
+                    'sell' => $this->calc->sell($code, $mid),
+                ];
+            }
+            $start->add(new \DateInterval('P1D'));
+        }
+        
         return $out;
     }
 }

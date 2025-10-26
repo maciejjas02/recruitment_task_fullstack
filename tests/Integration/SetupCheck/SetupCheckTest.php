@@ -10,13 +10,13 @@ class SetupCheckTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // test e.g. the profile page
         $client->request('GET', '/api/setup-check');
         $this->assertResponseIsSuccessful();
         $response = $client->getResponse();
         $this->assertJson($response->getContent());
         $responseData = json_decode($response->getContent(), TRUE);
-        $this->assertArrayHasKey('testParam', $responseData);
+        $this->assertArrayHasKey('ok', $responseData);
+        $this->assertTrue($responseData['ok']);
     }
 
 

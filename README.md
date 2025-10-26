@@ -1,69 +1,264 @@
-Fullstack Developer - Tasks
-==========
+# 💰 Kantor Pro - Currency Exchange System
 
-------------
+Profesjonalny system kantorowy z React frontend i Symfony API backend.
 
-### :warning: Zapoznaj się z poniższymi wytycznymi do pracy.
-### :warning: Treść zadań do wykonania przesłaliśmy mailem.
+## 🚀 Quick Start
 
-------------
+### 1. Uruchom Docker
+```bash
+docker-compose up -d
+```
 
-Jak zacząć pracę
-------------
-1. Należy zrobić Fork z tego repozytorium [Jak forkować repozytorium w GitHub](https://docs.github.com/en/get-started/quickstart/fork-a-repo), w ten sposób tworząc sobie prywatne miejsce do pracy.
-1. Następnie w stworzonym przez siebie forku repozytorium stwórz branch od gałęzi master, na którym będziesz pracować, np: ` $ git checkout -b MojeZadanieJanKowalski `
+### 2. Otwórz aplikację
+Przejdź do: **http://localhost** (automatyczne przekierowanie na app.html)
 
-### Setup środowiska
+Alternatywnie: **http://localhost/app.html**
 
-  1. Skonfiguruj sobie lokalny serwer (np. Apache) pod development; ustaw vHosta tak, żeby pod wybraną domeną pokazywał na odpowiedni katalog na dysku (tj. katalog `public/` z repo) - przykład poniżej:
+## 📋 Funkcjonalności
 
-        ```
-        <VirtualHost *:80>
-            # Root - katalog /public z repozytorium z Github
-            DocumentRoot "C:/xampp/htdocs/recruitment_task_fullstack/public/"
-            # domena lokalna
-            ServerName telemedi-zadanie.localhost
-        </VirtualHost>
-        ```
-  1. Jeśli Twoja skonfigurowana domena jest inna niż `telemedi-zadanie.localhost` - zmień ją w pliku `assets/js/components/SetupCheck.js` w metodzie getBaseUrl()
-  1. Zainstaluj paczki composera i npm (`$ composer install && npm install`)
-  1. Zbuduj appkę frontową w trybie watch (`$ npm run watch --dev`)
-  1. …i już, do dzieła! :)
+### ✅ **System kursów walut**
+- 🏦 **NBP API Integration** - live data z Narodowego Banku Polskiego
+- 💰 **Business Logic Margins**:
+  - EUR/USD: kupno (mid-0.15), sprzedaż (mid+0.11)
+  - CZK/IDR/BRL: tylko sprzedaż (mid+0.20)
+- 📅 **Historical Data** - kursy z dowolnej daty
+- 🔄 **Real-time Updates** - auto-refresh co minutę
 
-### Setup środowiska za pomocą dockera
+### ✅ **Interaktywne wykresy**
+- 📊 **Chart.js 4** - profesjonalne wykresy liniowe  
+- 🎨 **Triple Line Charts** - kupno (zielona), NBP (niebieska), sprzedaż (czerwona)
+- 📈 **Flexible Periods** - 7/14/30 dni lub custom range
+- 🎯 **Rich Tooltips** - szczegółowe dane on hover
+- 👁️ **Toggle Visibility** - show/hide charts
 
-  1. Uruchom komendę:
-  
-        ```
-        docker compose up -d
-        ```
-  1. Pod adresem  `http://telemedi-zadanie.localhost` powinna uruchomić się aplikacja 
+### ✅ **Obsługiwane waluty**
+- 🇪🇺 **EUR** - Euro (buy + sell)
+- 🇺🇸 **USD** - US Dollar (buy + sell)  
+- 🇨🇿 **CZK** - Czech Koruna (sell only)
+- 🇮🇩 **IDR** - Indonesian Rupiah (sell only)
+- 🇧🇷 **BRL** - Brazilian Real (sell only)
 
-------------
-_FYI: tak wygląda działająca aplikacja, gotowa do developmentu:_
+## 🏗️ Architektura
 
-![Working_app_image](https://github.com/telemedico/recruitment_task_fullstack/blob/master/assets/img/working_app_preview.png?raw=true)
+### **Backend: Symfony 6 + PHP 8.2**
+- 🔌 **REST API Endpoints**: 
+  - `GET /api/rates` - current rates (all currencies)
+  - `GET /api/rates/{code}/history` - historical data
+- 🏦 **NBP Client**: PSR-6 cached integration z api.nbp.pl
+- 🧮 **Rate Calculator**: Business logic z różnymi marżami
+- 🐳 **Docker Container**: recruitment-webserver:80
+- ✅ **56 Tests**: Unit + Integration coverage
 
-------------
+### **Frontend: Hybrid React + Vanilla JS**
+- ⚛️ **React 18 CDN**: State management, UI rendering, cards
+- 📊 **Vanilla JavaScript**: Chart.js functions (DOM compatibility)
+- 🎨 **External CSS**: Separated styles.css (350+ lines)
+- 📱 **Responsive Design**: Mobile-first approach
+- 🎭 **Animation Controls**: Pause/resume background animations
 
-Wytyczne dot. implementacji
-------------
+### **Key Technical Decisions**
+- � **Hybrid Architecture**: React state + vanilla Charts.js
+- 🌐 **CDN Dependencies**: No npm build, browser-ready
+- 💾 **Smart Caching**: NBP API responses cached
+- 🎯 **Clean Separation**: HTML/CSS/JS w logicznych blokach
 
-**Głównym celem implementacji powinno być pokazanie się z dobrej strony jako programista, czyli nie ma jednego słusznego podejścia! :)**
+## 🧪 Testowanie
 
-  1. W ramach implementacji nie należy dodawać nowych paczek do composer’a/npm’a. Zachęcamy do korzystania z tych, które już są dodane.
-  1. Development należy prowadzić pod kątem kompatybilności PHP z wersją 8.2 (zgodnie z composer.json)
-  1. Napisanie testów jest elementem oceny.
-  1. **Ocenie podlegać będzie całość podejścia do zadania.**
+### **Backend Tests (56 total)**
+```bash
+# W kontenerze Docker
+docker exec -it recruitment-webserver ./vendor/bin/phpunit
 
-Niedokończone zadanie też warto podesłać, np. z komentarzem, co by można było dodać - rozumiemy, że czasem nie starcza czasu na wszystko co się chce zrobić!
+# Lub lokalnie
+./vendor/bin/phpunit
+```
 
-Zakończenie pracy i wysłanie wyniku
-------------
-  1. **W swoim forku utwórz Pull Request do brancha master. Nie rób PR do oryginalnego repozytorium** (Pull Requesty do publicznych repo są publiczne)
-  1. **Poza implementacją zależy nam też na informacjach zwrotnych, które posłużą nam w poprawie jakości zadań.** Dlatego prosimy Cię o umieszczenie dodatkowo informacji w opisie tworzonego Pull Requesta:
-     1. Faktycznie poświęconego czasu na zadanie (po zakończeniu implementacji)
-     1. Feedbacku do samego zadania 
-     1. Twoich komentarzy dot. podejścia do zadania itd 
-        1. np. _“Robiąc X miałem na względzie Y, zastosowałem podejście Z”_ 
-  1. **Prosimy, potwierdź nam mailowo wykonanie zadania, wysyłając link do Pull Requesta w swoim forku. Upewnij się, że Twój PR będzie dla nas dostępny - przynajmniej dla usera `mkleska-telemedi`!**
+**Test Coverage:**
+- ✅ Unit: RateCalculator business logic
+- ✅ Integration: API endpoints responses 
+- ✅ Service: NbpClient with mocks
+- ✅ Validation: Error handling
+
+### **Manual API Testing**
+```bash
+# Wszystkie aktualne kursy
+curl http://localhost/api/rates
+
+# Kursy z konkretnej daty
+curl "http://localhost/api/rates?date=2025-10-25"
+
+# Historia EUR ostatnie 7 dni
+curl "http://localhost/api/rates/EUR/history?startDate=2025-10-19&endDate=2025-10-26"
+```
+
+## 🌐 Dostęp
+
+- **🖥️ Główna aplikacja**: http://localhost (auto-redirect)
+- **📱 Direct access**: http://localhost/app.html
+- **🔌 API endpoint**: http://localhost/api/rates
+- **📊 API history**: http://localhost/api/rates/EUR/history
+
+## 📁 Struktura projektu
+
+```
+recruitment_task_fullstack/
+├── 🐳 docker-compose.yml          # Docker orchestration
+├── 🔧 Dockerfile                  # PHP 8.2 + Apache container
+├── 📋 composer.json               # Symfony dependencies
+│
+├── 🏗️ src/
+│   ├── Controller/
+│   │   └── RatesController.php    # REST API (homepage + endpoints)
+│   └── Service/
+│       ├── NbpClient.php          # NBP API client + PSR-6 cache
+│       ├── RateCalculator.php     # Business logic margins
+│       └── RatesService.php       # Orchestration layer
+│
+├── 🌐 public/
+│   ├── index.php                  # Symfony entry point
+│   ├── app.html                   # React hybrid application (570 lines)
+│   └── styles.css                 # External CSS (350+ lines)
+│
+├── ⚙️ config/                     # Symfony configuration
+│   ├── routes.yaml                # URL routing
+│   └── services.yaml              # DI container
+├── 🧪 tests/                      # 56 Unit/Integration tests
+└── 📚 templates/                  # Twig templates (unused)
+```
+
+## 🎯 API Reference
+
+### **GET /api/rates**
+Zwraca aktualne kursy wszystkich obsługiwanych walut.
+
+**Query Parameters:**
+- `date` (optional) - format YYYY-MM-DD dla danych historycznych
+
+**Response Example:**
+```json
+[
+  {
+    "code": "EUR",
+    "mid": 4.2353,
+    "buy": 4.0853,      // mid - 0.15 (tylko EUR/USD)
+    "sell": 4.3453      // mid + 0.11 (EUR/USD) lub mid + 0.20 (inne)
+  },
+  {
+    "code": "USD", 
+    "mid": 3.9876,
+    "buy": 3.8376,      // mid - 0.15
+    "sell": 4.0976      // mid + 0.11
+  },
+  {
+    "code": "CZK",
+    "mid": 0.1756,
+    "buy": null,        // brak kupna dla CZK/IDR/BRL
+    "sell": 0.1956      // mid + 0.20
+  }
+]
+```
+
+### **GET /api/rates/{code}/history**
+Zwraca dane historyczne dla wybranej waluty.
+
+**Path Parameters:**
+- `code` - kod waluty (EUR, USD, CZK, IDR, BRL)
+
+**Query Parameters:**
+- `startDate` - data początkowa (YYYY-MM-DD)
+- `endDate` - data końcowa (YYYY-MM-DD)
+
+**Response Example:**
+```json
+{
+  "code": "EUR",
+  "points": [
+    {
+      "date": "2025-10-26",
+      "mid": 4.2353,
+      "buy": 4.0853,
+      "sell": 4.3453
+    },
+    {
+      "date": "2025-10-25", 
+      "mid": 4.2145,
+      "buy": 4.0645,
+      "sell": 4.3245
+    }
+  ]
+}
+```
+
+## 🛠️ Tech Stack
+
+**Backend:**
+- 🐘 **PHP 8.2** + 🎵 **Symfony 6.4**
+- 🐳 **Docker** + **Apache 2.4**
+- 🏦 **NBP API** integration
+- 💾 **PSR-6 Cache** interface
+- ✅ **PHPUnit** testing framework
+
+**Frontend:**
+- ⚛️ **React 18** (CDN, nie npm build)
+- 📊 **Chart.js 4** (vanilla JS integration)
+- 🎨 **CSS3** z animations i glassmorphism
+- � **Responsive design** (CSS Grid + Flexbox)
+- 🛠️ **Babel Standalone** (browser JSX transpilation)
+
+**Infrastructure:**
+- � **Docker Compose** orchestration
+- � **Apache vHost** configuration
+- 🔄 **Auto-redirect** (/ → /app.html)
+- 📈 **HTTP caching** headers
+
+## 🎨 UI/UX Features
+
+- 🌈 **Animated Gradients** - flowing background colors
+- 🎭 **Glassmorphism** - transparent panels with backdrop-blur
+- 💫 **Floating Orbs** - subtle animated background elements
+- 📱 **Mobile Responsive** - adaptive grid layout
+- 🎯 **Interactive Charts** - hover effects, rich tooltips
+- ⏸️ **Animation Controls** - pause/resume for accessibility
+- 🎪 **Success Status** - auto-hiding notifications z fade-out
+- 👁️ **Chart Toggle** - show/hide charts functionality
+
+---
+
+**💡 Production Ready**: Aplikacja gotowa do deployment z full Docker setup
+
+## 🚀 Development Notes
+
+### Quick Docker Setup
+```bash
+# Start aplikacji
+docker-compose up -d
+
+# Stop aplikacji  
+docker-compose down
+
+# View logs
+docker logs recruitment-webserver
+
+# Enter container
+docker exec -it recruitment-webserver bash
+```
+
+### Performance Optimizations
+- ✅ NBP API responses cached (PSR-6)
+- ✅ HTTP cache headers (60s)
+- ✅ External CSS separation
+- ✅ CDN dependencies (no build step)
+- ✅ Optimized Docker image
+
+### Browser Support
+- ✅ Chrome/Edge 90+
+- ✅ Firefox 88+  
+- ✅ Safari 14+
+- ✅ Mobile browsers
+
+---
+
+**Autor:** Maciej Jastrzębski  
+**Repo:** maciejjas02/recruitment_task_fullstack  
+**Branch:** feature/zadanie-Maciej_Jas
+

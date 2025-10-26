@@ -1,5 +1,10 @@
 
 
+homepage:
+  path: /
+  controller: App\Controller\RatesController::homepage
+  methods: [GET]
+
 setupcheck:
   path: /api/setup-check
   controller: App\Controller\DefaultController::setupCheck

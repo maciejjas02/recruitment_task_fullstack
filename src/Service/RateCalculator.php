@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-final class RateCalculator
+class RateCalculator
 {
     
     private const MAJORS = ['EUR', 'USD'];
